@@ -350,9 +350,34 @@ const StudyAssistant = () => {
     
     setIsGeneratingQuestions(true);
     try {
-      const contentToAnalyze = extractPageRangeFromOcr(pdfFullText, pageRange.start, pageRange.end);
+      // Check if we have analyzed pages in the range
+      const analyzedPagesInRange = [];
+      for (let i = pageRange.start; i <= pageRange.end; i++) {
+        if (existingStudyHistory?.pageAnalysesMap?.has(i)) {
+          analyzedPagesInRange.push(existingStudyHistory.pageAnalysesMap.get(i));
+        }
+      }
       
-      const analysisResult = await analyzePdfContent(contentToAnalyze, outputLanguage);
+      let analysisResult;
+      if (analyzedPagesInRange.length > 0) {
+        // Use existing analyses
+        const combinedKeyPoints = analyzedPagesInRange.flatMap(p => p.keyPoints || []);
+        const combinedSummary = analyzedPagesInRange.map(p => p.summary || '').join(' ');
+        const combinedStudyPoints = analyzedPagesInRange.flatMap(p => p.studyPoints || []);
+        
+        analysisResult = {
+          keyPoints: combinedKeyPoints,
+          summary: combinedSummary,
+          tnpscRelevance: `Quiz based on analyzed pages ${pageRange.start} to ${pageRange.end}`,
+          studyPoints: combinedStudyPoints,
+          tnpscCategories: ["PDF Quiz"]
+        };
+      } else {
+        // Analyze the content first
+        const contentToAnalyze = extractPageRangeFromOcr(pdfFullText, pageRange.start, pageRange.end);
+        analysisResult = await analyzePdfContent(contentToAnalyze, outputLanguage);
+      }
+      
       const result = await generateQuestionsFromService([analysisResult], difficulty, outputLanguage);
       
       setQuestionResult({
@@ -367,6 +392,16 @@ const StudyAssistant = () => {
     } finally {
       setIsGeneratingQuestions(false);
     }
+  };
+
+  const handleShowPageRangeSelector = () => {
+    if (!pdfInfo) return;
+    setCurrentView("pdf-page-select");
+  };
+
+  const handlePageRangeConfirm = (startPage: number, endPage: number) => {
+    // This will be handled by the PdfPageNavigator component
+    setCurrentView("pdf-navigator");
   };
 
   const resetToUpload = () => {
@@ -511,11 +546,11 @@ const StudyAssistant = () => {
     return (
       <PageRangeSelector
         totalPages={pdfInfo.totalPages}
-        onConfirm={() => setCurrentView("pdf-navigator")}
+        onConfirm={handlePageRangeConfirm}
         onBack={resetToUpload}
         title="Select PDF Pages"
         description="Choose which pages to analyze for TNPSC preparation"
-        isProcessing={false}
+        isProcessing={isProcessingPageRange}
       />
     );
   }
