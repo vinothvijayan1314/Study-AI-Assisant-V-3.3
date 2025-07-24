@@ -112,6 +112,7 @@ const StudyAssistant = () => {
     totalKeyPoints: string[];
     tnpscCategories: string[];
   } | null>(null);
+  const [pdfCurrentPage, setPdfCurrentPage] = useState(1);
 
   const handleFileSelect = (files: FileList | null) => {
     if (!files) return;
@@ -486,6 +487,8 @@ const StudyAssistant = () => {
         onStartQuiz={handlePdfNavigatorQuiz}
         initialPageAnalyses={existingStudyHistory?.pageAnalysesMap}
         initialStudyHistoryId={existingStudyHistory?.id}
+        currentPage={pdfCurrentPage}
+        onPageChange={setPdfCurrentPage}
       />
     );
   }
