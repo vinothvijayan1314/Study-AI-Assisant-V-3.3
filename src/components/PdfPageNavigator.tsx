@@ -50,7 +50,8 @@ interface PdfPageNavigatorProps {
   onPageChange: (page: number) => void;
 }
 
-const PdfPageNavigator = ({
+// FIX: Added 'export' here to create a named export
+export const PdfPageNavigator = ({
   file,
   totalPages,
   fullText,
@@ -803,4 +804,5 @@ const PdfPageNavigator = ({
   );
 };
 
-export default PdfPageNavigator;
+// FIX: Removed the 'export default' line from the end
+// export default PdfPageNavigator;
